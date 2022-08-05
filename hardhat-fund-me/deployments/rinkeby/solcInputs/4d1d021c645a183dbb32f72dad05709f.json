@@ -1,0 +1,41 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/FundMe.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.8;\n\n//vamos a obtener fondos de usuarios\n//retirar los fondos\n//enviar un minimo de fondos en USD\n\nimport \"./PriceConverter.sol\";\n\nerror NotOwner();\n\ncontract FundMe {\n    using PriceConverter for uint256; //importacion de la libreria\n    uint256 public constant MINIMIM_USD = 50 * 1e18;\n\n    //variable que almacene a los usuarios que mandan fondos\n    address[] public funders;\n    mapping(address => uint256) public addressToAmountFunded;\n\n    //es necesario siempre tener un constructor para establecer el propietario del contrato para que no cualquiera extraiga los fondos\n    address public immutable i_owner;\n\n    AggregatorV3Interface public priceFeed;\n\n    constructor(address priceFeedAddress) {\n        i_owner = msg.sender;\n        priceFeed = AggregatorV3Interface(priceFeedAddress);\n    }\n\n    function fund() public payable {\n        //queremos que sea posible un deposito minimo de fondos en USD\n        //1 ¿ Como mandamos Eth al contrato?\n        //require es un controlador de flujo, si se cumple sigue su ejecucion, si no revierte todo lo ejecutado en el metodo\n        //require(msg.value >= minimumUSD, \"No se envio suficientes fondos\"); // msg.value es la cantidad de criptos que vamos a enviar\n\n        //2\n        //podemos ajustar los decimales\n        //require(getConversionRate(msg.value)>=minimumUSD,\"Fatal\");\n\n        //3\n        //podemos introducir librerias para los valores nativos de solidity para por ejemplo hacer: msg.sender.getConversionRate()\n        require(msg.value.getConversionRate(priceFeed) <= MINIMIM_USD, \"Bad\");\n        funders.push(msg.sender);\n        addressToAmountFunded[msg.sender] = msg.value;\n    }\n\n    //funcion para retirar\n    function withdraw() public onlyOwner {\n        for (\n            uint256 funderIndex = 0;\n            funderIndex < funders.length;\n            funderIndex++\n        ) {\n            address funder = funders[funderIndex];\n            addressToAmountFunded[funder] = 0;\n        }\n        //resetting array\n        funders = new address[](0);\n\n        //withdraw the fund\n        //1.transfer\n        //payable(msg.sender).transfer(address(this).balance);\n        //usar transfer usa 2300 de gas y si falla revierte la transaccion\n        //2.send\n        //bool sendSuccess = payable(msg.sender).send(address(this).balance);\n        //require(sendSuccess,\"send failed\");\n        //usar send usa 2300 de gas y devuelve un booleano, por lo que debe ir acompañado de un require\n        //3.call (la mas poderosa)\n        //la funcion call nos permite usar cualquier funcion alojada en cualquier contrato en ethereum sin necesitar la ABI\n        //la funcion call es la recomendada para mandar o recibir eth o tokens\n        (\n            bool callSuccess, /*bytes memory dataReturned*/\n\n        ) = payable(msg.sender).call{value: address(this).balance}(\"\");\n        require(callSuccess, \"call failed\");\n    }\n\n    //modifiers son keywords que se aplican sobre funciones como la particula payable, que ejecutan un codigo generalmente requires\n    modifier onlyOwner() {\n        //vamos a crear un error personalizado para este require y asi reducir el gas :\n        //require(msg.sender == i_owner, \"Not the owner\");\n        if (msg.sender != i_owner) {\n            revert NotOwner();\n        }\n        _; //esto indica que debe de seguir la ejecucion donde la dejo en su salto hacia este modifier\n    }\n\n    receive() external payable {\n        //esta funcion se ejecuta si alguien por accidente envia su dinero al contrato,\n        //es una funcion de respaldo, con la unica diferencia de que se refleja como una funcion transfer\n        fund();\n    }\n\n    fallback() external payable {\n        fund();\n    }\n}\n"
+    },
+    "contracts/PriceConverter.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.8;\nimport \"@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol\"; //esto nos da el abi\n\nlibrary PriceConverter {\n    //necesitamos obtener el precio de eth/usd\n    function getPrice(AggregatorV3Interface priceFeed)\n        internal\n        view\n        returns (uint256)\n    {\n        //necesitamos ABI(funciones del oraculo de chainlink)\n        //address of contract que queremos(ethereum/usd) 0x8A753747A1Fa494EC906cE90E9f37563A8AF630e\n        //lka funcion latestRoundData devuelve muchas cosas, para descartar debemos poner las comas y escribir solo la que queremos\n        (\n            ,\n            /*uint80 roundId*/\n            int256 price, /*uint startedAt*/ /* uint timeStamp*/ /*uint80 answeredInRound*/\n            ,\n            ,\n\n        ) = priceFeed.latestRoundData(); //precio ETH/USD\n        return uint256(price * 1e10);\n    }\n\n    function getConversionRate(\n        uint256 ethAmount,\n        AggregatorV3Interface priceFeed\n    ) internal view returns (uint256) {\n        uint256 ethPrice = getPrice(priceFeed);\n        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1e18;\n        return ethAmountInUsd;\n    }\n}\n"
+    },
+    "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ninterface AggregatorV3Interface {\n  function decimals() external view returns (uint8);\n\n  function description() external view returns (string memory);\n\n  function version() external view returns (uint256);\n\n  // getRoundData and latestRoundData should both raise \"No data present\"\n  // if they do not have data to report, instead of returning unset values\n  // which could be misinterpreted as actual reported values.\n  function getRoundData(uint80 _roundId)\n    external\n    view\n    returns (\n      uint80 roundId,\n      int256 answer,\n      uint256 startedAt,\n      uint256 updatedAt,\n      uint80 answeredInRound\n    );\n\n  function latestRoundData()\n    external\n    view\n    returns (\n      uint80 roundId,\n      int256 answer,\n      uint256 startedAt,\n      uint256 updatedAt,\n      uint80 answeredInRound\n    );\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

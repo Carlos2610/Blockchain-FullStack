@@ -1,0 +1,9 @@
+{
+    "name": "Old Goblin",
+    "description": "An Old greedy goblin",
+    "image": "ipfs://QmPyXuLhekgqXqnccvkGj69NNvPdewnyzi38XvG8T4LMJL",
+    "attributes": {
+        "trait_type": "Old greedy",
+        "value": 100
+    }
+}

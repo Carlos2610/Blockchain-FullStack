@@ -1,0 +1,14 @@
+hre.ethers
+hre	.
+const randomIpfsNft1 = await deploy("RandomIpfsNft")
+const randomIpfsNft = await deploy("RandomIpfsNft")
+const randomIpfsNft = a
+.help
+const randomNft1 = await ethers.getContract("RandomIpfsNft");
+const randomNft = await ethers.getContract("RandomIpfsNft");
+const randomNft = await ethers.getContract
+const a = await RandomIpfsNft.requestNft({value:"10000000000000000000"});
+const s = await RandomIpfsNft.requestNft({value:"10000000000000000000"});
+const s = await requestNft({value:"10000000000000000000"});
+const subId = await requestNft({value:"10000000000000000000"});
+const subId = s_tokenCounter()

@@ -1,0 +1,9 @@
+{
+    "name": "Angry Goblin",
+    "description": "An angry greedy goblin",
+    "image": "ipfs://QmRzBwr2LRwHA8obCEzUcpMYnDbF6s8NigvXGaCeJBg98C",
+    "attributes": {
+        "trait_type": "angry greedy",
+        "value": 100
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "name": "Happy Goblin",
+    "description": "A happy greedy goblin",
+    "image": "ipfs://QmTKkHqSXjYgrLQZ9wNicHN4aB6yEZQaEURC1mbZxeAu8t",
+    "attributes": {
+        "trait_type": "happy greedy",
+        "value": 100
+    }
+}
