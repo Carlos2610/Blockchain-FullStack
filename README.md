@@ -1,2 +1,10 @@
 # Blockchain-FullStack
-My blockchain source code from my first Blockchain developing steps
+
+## EthersJS
+## Hardhat
+## Moralis
+## TheGraph
+## NextJS Frontend
+## NFT Marketplaces
+## Upgradable Smart Contracts
+## Secutiry
