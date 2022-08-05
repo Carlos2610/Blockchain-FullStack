@@ -7,4 +7,4 @@
 ## NextJS Frontend
 ## NFT Marketplaces
 ## Upgradable Smart Contracts
-## Secutiry
+## Security
